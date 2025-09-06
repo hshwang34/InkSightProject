@@ -1,0 +1,165 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaze-lab"
+version = "1.0.0"
+description = "Production-ready toolkit for Pupil Labs eye-tracking data analysis"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "GazeLab Team", email = "team@gazelab.dev"}
+]
+maintainers = [
+    {name = "GazeLab Team", email = "team@gazelab.dev"}
+]
+keywords = ["eye-tracking", "gaze-analysis", "pupil-labs", "visualization", "aoi"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.21.0",
+    "pandas>=1.3.0",
+    "scipy>=1.7.0",
+    "opencv-python>=4.5.0",
+    "matplotlib>=3.5.0",
+    "shapely>=1.8.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+realtime = [
+    # Placeholder for optional real-time client
+    # "pupil-labs-realtime-api>=1.0.0",  # Uncomment when available
+]
+
+[project.urls]
+Homepage = "https://github.com/gazelab/gaze-lab"
+Documentation = "https://gaze-lab.readthedocs.io"
+Repository = "https://github.com/gazelab/gaze-lab.git"
+Issues = "https://github.com/gazelab/gaze-lab/issues"
+
+[project.scripts]
+gaze-record = "gaze_lab.cli.record_realtime:main"
+gaze-overlay = "gaze_lab.cli.export_overlay:main"
+gaze-aoi = "gaze_lab.cli.export_aoi_report:main"
+gaze-heatmap = "gaze_lab.cli.export_heatmap:main"
+gaze-map = "gaze_lab.cli.map_to_reference:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gaze_lab*"]
+exclude = ["tests*", "examples*", "scripts*", "docs*"]
+
+[tool.setuptools.package-data]
+gaze_lab = ["*.json", "*.yaml", "*.yml"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["gaze_lab"]
+known_third_party = ["numpy", "pandas", "scipy", "cv2", "matplotlib", "shapely", "pydantic"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cv2.*",
+    "shapely.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "realtime: marks tests requiring realtime dependencies",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["gaze_lab"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

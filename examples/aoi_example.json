@@ -1,0 +1,48 @@
+{
+  "aois": [
+    {
+      "name": "top_left_square",
+      "type": "rectangle",
+      "coordinates": [
+        [100, 100],
+        [300, 100],
+        [300, 200],
+        [100, 200]
+      ],
+      "metadata": {
+        "description": "Top-left reference square"
+      }
+    },
+    {
+      "name": "center_circle",
+      "type": "circle",
+      "coordinates": [
+        [640, 360, 50]
+      ],
+      "metadata": {
+        "description": "Center reference circle"
+      }
+    },
+    {
+      "name": "bottom_right_square",
+      "type": "rectangle",
+      "coordinates": [
+        [1080, 520],
+        [1180, 520],
+        [1180, 620],
+        [1080, 620]
+      ],
+      "metadata": {
+        "description": "Bottom-right reference square"
+      }
+    }
+  ],
+  "metadata": {
+    "created_by": "GazeLab",
+    "description": "Example AOI configuration for synthetic data",
+    "frame_size": {
+      "width": 1280,
+      "height": 720
+    }
+  }
+}
