@@ -434,3 +434,104 @@ class AOIAnalyzer:
                 issues.append(f"AOI '{aoi_name}' has zero area")
         
         return issues
+
+
+def peak_dwell_timestamp(
+    gaze_df: pd.DataFrame,
+    aoi: Dict,
+    window_ms: int = 5000
+) -> int:
+    """
+    Find timestamp with peak dwell time within an AOI using sliding window.
+    
+    Args:
+        gaze_df: Gaze data with canonical schema (t_ns, gx_px, gy_px, frame_w, frame_h)
+        aoi: AOI dictionary with 'type' and 'coordinates' keys
+        window_ms: Sliding window size in milliseconds
+        
+    Returns:
+        Timestamp (t_ns) at center of window with maximum dwell time
+        
+    Raises:
+        ValueError: If no gaze data found within AOI or invalid parameters
+    """
+    if gaze_df.empty:
+        raise ValueError("Gaze data is empty")
+    
+    if window_ms <= 0:
+        raise ValueError("Window size must be positive")
+    
+    # Create AOI object for hit testing
+    aoi_obj = AOI(
+        name="temp",
+        aoi_type=aoi["type"],
+        coordinates=aoi["coordinates"],
+        metadata=aoi.get("metadata", {})
+    )
+    
+    # Filter gaze data to points within AOI
+    in_aoi_mask = []
+    for _, row in gaze_df.iterrows():
+        if pd.isna(row["gx_px"]) or pd.isna(row["gy_px"]):
+            in_aoi_mask.append(False)
+        else:
+            point = Point(row["gx_px"], row["gy_px"])
+            in_aoi_mask.append(aoi_obj.contains_point(point))
+    
+    aoi_gaze = gaze_df[in_aoi_mask].copy()
+    
+    if aoi_gaze.empty:
+        raise ValueError(f"No gaze data found within AOI '{aoi.get('name', 'unnamed')}'")
+    
+    logger.debug(f"Found {len(aoi_gaze)} gaze points within AOI out of {len(gaze_df)} total")
+    
+    # Convert window size to nanoseconds
+    window_ns = window_ms * 1_000_000
+    
+    # Get time range
+    min_time = aoi_gaze["t_ns"].min()
+    max_time = aoi_gaze["t_ns"].max()
+    
+    if max_time - min_time < window_ns:
+        # Data span is shorter than window, return middle timestamp
+        middle_time = int((min_time + max_time) / 2)
+        logger.debug(f"Data span ({(max_time - min_time) / 1e9:.2f}s) shorter than window ({window_ms/1000:.2f}s), returning middle timestamp")
+        return middle_time
+    
+    # Sliding window analysis
+    best_dwell = 0
+    best_timestamp = int((min_time + max_time) / 2)  # Default to middle
+    
+    # Step size (smaller = more precise, larger = faster)
+    step_ns = window_ns // 10  # 10 steps per window
+    
+    current_time = min_time
+    while current_time + window_ns <= max_time:
+        window_start = current_time
+        window_end = current_time + window_ns
+        
+        # Count gaze points in this window
+        window_mask = (aoi_gaze["t_ns"] >= window_start) & (aoi_gaze["t_ns"] < window_end)
+        window_gaze = aoi_gaze[window_mask]
+        
+        if len(window_gaze) > 0:
+            # Calculate dwell time (sum of inter-sample intervals)
+            window_gaze_sorted = window_gaze.sort_values("t_ns")
+            time_diffs = window_gaze_sorted["t_ns"].diff().fillna(0)
+            
+            # Assume average sampling rate for first sample
+            if len(time_diffs) > 1:
+                avg_interval = time_diffs[1:].mean()
+                time_diffs.iloc[0] = avg_interval
+            
+            total_dwell = time_diffs.sum()
+            
+            if total_dwell > best_dwell:
+                best_dwell = total_dwell
+                best_timestamp = int(window_start + window_ns // 2)  # Center of window
+        
+        current_time += step_ns
+    
+    logger.debug(f"Peak dwell: {best_dwell / 1e9:.3f}s at timestamp {best_timestamp} ({best_timestamp / 1e9:.3f}s)")
+    
+    return best_timestamp

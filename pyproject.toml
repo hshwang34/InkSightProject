@@ -39,6 +39,7 @@ dependencies = [
     "matplotlib>=3.5.0",
     "shapely>=1.8.0",
     "pydantic>=2.0.0",
+    "pillow>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +57,10 @@ realtime = [
     # Placeholder for optional real-time client
     # "pupil-labs-realtime-api>=1.0.0",  # Uncomment when available
 ]
+ocr = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.6.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/gazelab/gaze-lab"
@@ -69,6 +74,7 @@ gaze-overlay = "gaze_lab.cli.export_overlay:main"
 gaze-aoi = "gaze_lab.cli.export_aoi_report:main"
 gaze-heatmap = "gaze_lab.cli.export_heatmap:main"
 gaze-map = "gaze_lab.cli.map_to_reference:main"
+gaze-ocr = "gaze_lab.cli.ocr_extract:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
